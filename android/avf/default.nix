@@ -30,17 +30,16 @@ with lib;
   };
 
   #  FIXME: generate AVF image
-  system.build.avfImage =
-    pkgs.vmTools.runInLinuxVM (
-      pkgs.callPackage ./finish.nix {
-        raw_disk_image = import "${pkgs.path}/nixos/lib/make-disk-image.nix" {
-          inherit pkgs lib config;
+  system.build.avfImage = pkgs.vmTools.runInLinuxVM (
+    pkgs.callPackage ./finish.nix {
+      raw_disk_image = import "${pkgs.path}/nixos/lib/make-disk-image.nix" {
+        inherit pkgs lib config;
 
-          partitionTableType = "efi";
-          copyChannel = true;
-        };
-      }
-    );
+        partitionTableType = "efi";
+        copyChannel = true;
+      };
+    }
+  );
 
   boot.growPartition = true;
   boot.loader.systemd-boot.enable = true;
