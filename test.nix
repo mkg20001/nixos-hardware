@@ -10,4 +10,4 @@
       }
     )
   ];
-}).config.system.build.qemuImage
+}).config.system.build.avfImage
