@@ -60,6 +60,8 @@ with lib;
 
   # image building needs to know what device to install bootloader on
   boot.loader.grub.device = "/dev/vda";
+  # Faster boot. User can't access bootloader currently anyways (?)
+  boot.loader.timeout = 0;
 
   # avf patches only available for 6.1 right now
   boot.kernelPackages = pkgs.linuxPackages_6_1;
