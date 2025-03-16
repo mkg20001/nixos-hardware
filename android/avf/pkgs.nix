@@ -107,5 +107,25 @@ in
         lockFile = ./shutdown_runner_Cargo.lock;
       };
     };
+    storage_balloon_agent = rustPlatform.buildRustPackage {
+      name = "storage_balloon_agent";
+
+      inherit BINDGEN_EXTRA_CLANG_ARGS LD_LIBRARY_PATH LIBRARY_PATH;
+
+      src = base;
+      setSourceRoot = "sourceRoot=$(echo */guest/storage_balloon_agent)";
+
+      nativeBuildInputs = [
+        protobuf_28
+      ];
+
+      postPatch = ''
+        ln -s ${./storage_balloon_agent_Cargo.lock} Cargo.lock
+      '';
+
+      cargoLock = {
+        lockFile = ./storage_balloon_agent_Cargo.lock;
+      };
+    };
   };
 }

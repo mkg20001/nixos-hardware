@@ -9,8 +9,8 @@
 let
   base = pkgs.fetchgit {
     url = "https://android.googlesource.com/platform/packages/modules/Virtualization/";
-    rev = "e74bf8329a1e8fcac201bb93f7d6437a35ae9794";
-    sha256 = "1r418g908hkfx4yw08kirwf3mpzbggf2yyqyk3zi8prgl4zw0ihh";
+    rev = "b1dbca3f1dba69e953eeb81eec0485c387670b55";
+    hash = "sha256-g3XNwmufAZQNh8DNDu1sQZM1gdxXL8oJfGnzQ+3DYoo=";
   };
   extraPkgs = pkgs.callPackage ./pkgs.nix { inherit base; };
 
@@ -107,6 +107,25 @@ with lib;
       device = "android";
       fsType = "virtiofs";
     };
+  };
+
+  # from Virtualization/guest/storage_balloon_agent/debian/service
+
+  systemd.services.storage_balloon_agent = {
+    path = [ extraPkgs.android_virt.storage_balloon_agent ];
+    script = ''
+      storage_balloon_agent --grpc-port-file /mnt/internal/debian_service_port
+    '';
+    serviceConfig = {
+      Type = "simple";
+      Restart = "on-failure";
+      RestartSec = 1;
+      User = "root";
+      Group = "root";
+      StandardOutput = "journal";
+      StandardError = "journal";
+    };
+    wantedBy = [ "multi-user.target" ];
   };
 
   # from Virtualization/guest/forwarder_guest_launcher/debian/service
