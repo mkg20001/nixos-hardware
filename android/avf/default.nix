@@ -31,17 +31,14 @@ with lib;
 
   #  FIXME: generate AVF image
   system.build.avfImage =
-    let
-      raw_disk_image = import "${pkgs.path}/nixos/lib/make-disk-image.nix" {
-        inherit pkgs lib config;
-
-        partitionTableType = "efi";
-        copyChannel = true;
-      };
-    in
     pkgs.vmTools.runInLinuxVM (
       pkgs.callPackage ./finish.nix {
-        inherit raw_disk_image;
+        raw_disk_image = import "${pkgs.path}/nixos/lib/make-disk-image.nix" {
+          inherit pkgs lib config;
+
+          partitionTableType = "efi";
+          copyChannel = true;
+        };
       }
     );
 
