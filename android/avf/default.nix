@@ -29,11 +29,11 @@ with lib;
     # package = extraPkgs.ttyd;
   };
 
+  #  FIXME: generate AVF image
   system.build.qemuImage = import "${pkgs.path}/nixos/lib/make-disk-image.nix" {
     inherit pkgs lib config;
 
     partitionTableType = "efi";
-    format = "qcow2-compressed";
     copyChannel = true;
   };
 

@@ -9,7 +9,6 @@
   libwebsockets,
 }:
 let
-
   libs = with stdenv.cc; {
     ccLib = cc.lib;
     libc = libc;
