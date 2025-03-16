@@ -18,8 +18,8 @@ stdenv.mkDerivation {
   dontUnpack = true;
   dontBuild = true;
   installPhase = ''
-    local root_partition_num=1
-    local efi_partition_num=2
+    local root_partition_num=2
+    local efi_partition_num=1
 
     echo ''${build_id} > build_id
 
