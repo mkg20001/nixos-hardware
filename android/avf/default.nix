@@ -7,7 +7,7 @@
 }:
 
 let
-  base = pkgs.fetchFromGit {
+  base = pkgs.fetchgit {
     url = "https://android.googlesource.com/platform/packages/modules/Virtualization/";
     rev = "e74bf8329a1e8fcac201bb93f7d6437a35ae9794";
     sha256 = "1r418g908hkfx4yw08kirwf3mpzbggf2yyqyk3zi8prgl4zw0ihh";
@@ -87,7 +87,7 @@ with lib;
   # from Virtualization/guest/forwarder_guest_launcher/debian/service
 
   systemd.services.forwarder_guest_launcher = {
-    path = [ pkgs.android_virt.forwarder_guest_launcher ];
+    path = [ extraPkgs.android_virt.forwarder_guest_launcher ];
     script = ''
       forwarder_guest_launcher --grpc-port-file /mnt/internal/debian_service_port
     '';

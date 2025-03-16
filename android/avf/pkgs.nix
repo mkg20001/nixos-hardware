@@ -60,8 +60,12 @@ in
         protobuf_28
       ];
 
+      postPatch = ''
+        ln -s ${./forwarder_guest_Cargo.lock} Cargo.lock
+      '';
+
       cargoLock = {
-        lockFile = "${base}/build/guest/forwarder_guest/Cargo.lock";
+        lockFile = ./forwarder_guest_Cargo.lock;
       };
     };
     forwarder_guest_launcher = rustPlatform.buildRustPackage {
@@ -76,8 +80,12 @@ in
         protobuf_28
       ];
 
+      postPatch = ''
+        ln -s ${./forwarder_guest_launcher_Cargo.lock} Cargo.lock
+      '';
+
       cargoLock = {
-        lockFile = "${base}/guest/forwarder_guest_launcher/Cargo.lock";
+        lockFile = ./forwarder_guest_launcher_Cargo.lock;
       };
     };
     shutdown_runner = rustPlatform.buildRustPackage {
@@ -92,8 +100,12 @@ in
         protobuf_28
       ];
 
+      postPatch = ''
+        ln -s ${./shutdown_runner_Cargo.lock} Cargo.lock
+      '';
+
       cargoLock = {
-        lockFile = "${base}/build/guest/shutdown_runner/Cargo.lock";
+        lockFile = ./shutdown_runner_Cargo.lock;
       };
     };
   };
