@@ -13,12 +13,15 @@ let
     sha256 = "1r418g908hkfx4yw08kirwf3mpzbggf2yyqyk3zi8prgl4zw0ihh";
   };
   extraPkgs = pkgs.callPackage ./pkgs.nix { inherit base; };
+
+  serialDevice = if pkgs.stdenv.hostPlatform.isx86 then "ttyS0" else "ttyAMA0";
 in
 
 with lib;
 {
-  services.ttyd = {
+  /* services.ttyd = {
     enable = true;
+    enableSSL = true;
     certFile = "/etc/ttyd/server.crt";
     keyFile = "/etc/ttyd/server.key";
     caFile = "/mnt/internal/ca.crt";
@@ -27,9 +30,20 @@ with lib;
     #   -W login
     #   -f droid
     # package = extraPkgs.ttyd;
+  }; */
+
+  systemd.services.ttyd = {
+    serviceConfig = {
+      ExecStart = "${extraPkgs.ttyd}/bin/ttyd --ssl --ssl-cert /etc/ttyd/server.crt --ssl-key /etc/ttyd/server.key --ssl-ca /mnt/internal/ca.crt -t disableLeaveAlert=true -W login -f droid";
+      Type = "simple";
+      Restart = "always";
+      User = "root";
+      Group = "root";
+    };
+
+    wantedBy = [ "multi-user.target" ];
   };
 
-  #  FIXME: generate AVF image
   system.build.avfImage = pkgs.vmTools.runInLinuxVM (
     pkgs.callPackage ./finish.nix {
       raw_disk_image = import "${pkgs.path}/nixos/lib/make-disk-image.nix" {
@@ -61,6 +75,11 @@ with lib;
         SOUND = yes;
       };
     }
+  ];
+
+  boot.kernelParams = [
+    "console=tty1"
+    "console=${serialDevice}"
   ];
 
   systemd.services.ttyd = {
