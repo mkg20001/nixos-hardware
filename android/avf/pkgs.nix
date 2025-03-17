@@ -1,35 +1,13 @@
 {
   base,
   lib,
-  stdenv,
   ttyd,
   rustPlatform,
-  zlib,
   protobuf_28,
   libwebsockets,
 }:
 let
-  libs = with stdenv.cc; {
-    ccLib = cc.lib;
-    libc = libc;
-    libcDev = libc.dev;
-    libcStatic = libc.static;
-    libgcc = cc.libgcc;
-  };
-
-  # Make clang aware of a few headers
-  BINDGEN_EXTRA_CLANG_ARGS = ''-isystem ${libs.libcDev}/include'';
-
-  # libc dynamic libraries
-  LD_LIBRARY_PATH = lib.makeLibraryPath [
-    libs.ccLib
-    libs.libc
-    libs.libgcc
-    zlib
-  ];
-
-  # libc static libraries
-  LIBRARY_PATH = lib.makeLibraryPath [ libs.libcStatic ];
+  RUSTFLAGS = "-C linker=gcc";
 in
 {
   ttyd =
@@ -50,7 +28,7 @@ in
     forwarder_guest = rustPlatform.buildRustPackage {
       name = "forwarder_guest";
 
-      inherit BINDGEN_EXTRA_CLANG_ARGS LD_LIBRARY_PATH LIBRARY_PATH;
+      inherit RUSTFLAGS;
 
       src = base;
       setSourceRoot = "sourceRoot=$(echo */guest/forwarder_guest)";
@@ -70,7 +48,7 @@ in
     forwarder_guest_launcher = rustPlatform.buildRustPackage {
       name = "forwarder_guest_launcher";
 
-      inherit BINDGEN_EXTRA_CLANG_ARGS LD_LIBRARY_PATH LIBRARY_PATH;
+      inherit RUSTFLAGS;
 
       src = base;
       setSourceRoot = "sourceRoot=$(echo */guest/forwarder_guest_launcher)";
@@ -110,7 +88,7 @@ in
     storage_balloon_agent = rustPlatform.buildRustPackage {
       name = "storage_balloon_agent";
 
-      inherit BINDGEN_EXTRA_CLANG_ARGS LD_LIBRARY_PATH LIBRARY_PATH;
+      inherit RUSTFLAGS;
 
       src = base;
       setSourceRoot = "sourceRoot=$(echo */guest/storage_balloon_agent)";

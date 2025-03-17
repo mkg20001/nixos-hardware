@@ -19,18 +19,20 @@ in
 
 with lib;
 {
-  /* services.ttyd = {
-    enable = true;
-    enableSSL = true;
-    certFile = "/etc/ttyd/server.crt";
-    keyFile = "/etc/ttyd/server.key";
-    caFile = "/mnt/internal/ca.crt";
-    writeable = true;
-    #   disableLeaveAlert = true;
-    #   -W login
-    #   -f droid
-    # package = extraPkgs.ttyd;
-  }; */
+  /*
+    services.ttyd = {
+      enable = true;
+      enableSSL = true;
+      certFile = "/etc/ttyd/server.crt";
+      keyFile = "/etc/ttyd/server.key";
+      caFile = "/mnt/internal/ca.crt";
+      writeable = true;
+      #   disableLeaveAlert = true;
+      #   -W login
+      #   -f droid
+      # package = extraPkgs.ttyd;
+    };
+  */
 
   systemd.services.ttyd = {
     serviceConfig = {
