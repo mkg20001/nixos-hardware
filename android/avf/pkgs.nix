@@ -7,7 +7,37 @@
   libwebsockets,
 }:
 let
-  RUSTFLAGS = "-C linker=gcc";
+
+  mkRustPkg = name: lock: rustPlatform.buildRustPackage {
+    inherit name;
+
+    RUSTFLAGS = "-C linker=gcc";
+
+    # see https://github.com/NixOS/nixpkgs/issues/145726
+    # TODO: disable when cross-compling
+    prePatch = ''
+      rm .cargo/config.toml
+    '';
+
+    src = base;
+    setSourceRoot = "sourceRoot=$(echo */guest/${name})";
+
+    nativeBuildInputs = [
+      protobuf_28
+    ];
+
+    postPatch = ''
+      ln -s ${lock} Cargo.lock
+    '';
+
+    cargoLock = {
+      lockFile = lock;
+    };
+
+    meta = {
+      mainProgram = name;
+    };
+  };
 in
 {
   ttyd =
@@ -25,85 +55,9 @@ in
       });
 
   android_virt = lib.recurseIntoAttrs {
-    forwarder_guest = rustPlatform.buildRustPackage {
-      name = "forwarder_guest";
-
-      inherit RUSTFLAGS;
-
-      src = base;
-      setSourceRoot = "sourceRoot=$(echo */guest/forwarder_guest)";
-
-      nativeBuildInputs = [
-        protobuf_28
-      ];
-
-      postPatch = ''
-        ln -s ${./forwarder_guest_Cargo.lock} Cargo.lock
-      '';
-
-      cargoLock = {
-        lockFile = ./forwarder_guest_Cargo.lock;
-      };
-    };
-    forwarder_guest_launcher = rustPlatform.buildRustPackage {
-      name = "forwarder_guest_launcher";
-
-      inherit RUSTFLAGS;
-
-      src = base;
-      setSourceRoot = "sourceRoot=$(echo */guest/forwarder_guest_launcher)";
-
-      nativeBuildInputs = [
-        protobuf_28
-      ];
-
-      postPatch = ''
-        ln -s ${./forwarder_guest_launcher_Cargo.lock} Cargo.lock
-      '';
-
-      cargoLock = {
-        lockFile = ./forwarder_guest_launcher_Cargo.lock;
-      };
-    };
-    shutdown_runner = rustPlatform.buildRustPackage {
-      name = "shutdown_runner";
-
-      inherit RUSTFLAGS;
-
-      src = base;
-      setSourceRoot = "sourceRoot=$(echo */guest/shutdown_runner)";
-
-      nativeBuildInputs = [
-        protobuf_28
-      ];
-
-      postPatch = ''
-        ln -s ${./shutdown_runner_Cargo.lock} Cargo.lock
-      '';
-
-      cargoLock = {
-        lockFile = ./shutdown_runner_Cargo.lock;
-      };
-    };
-    storage_balloon_agent = rustPlatform.buildRustPackage {
-      name = "storage_balloon_agent";
-
-      inherit RUSTFLAGS;
-
-      src = base;
-      setSourceRoot = "sourceRoot=$(echo */guest/storage_balloon_agent)";
-
-      nativeBuildInputs = [
-        protobuf_28
-      ];
-
-      postPatch = ''
-        ln -s ${./storage_balloon_agent_Cargo.lock} Cargo.lock
-      '';
-
-      cargoLock = {
-        lockFile = ./storage_balloon_agent_Cargo.lock;
-      };
-    };
+    forwarder_guest = mkRustPkg "forwarder_guest" ./forwarder_guest_Cargo.lock;
+    forwarder_guest_launcher = mkRustPkg "forwarder_guest_launcher" ./forwarder_guest_launcher_Cargo.lock;
+    shutdown_runner = mkRustPkg "shutdown_runner" ./shutdown_runner_Cargo.lock;
+    storage_balloon_agent = mkRustPkg "storage_balloon_agent" ./storage_balloon_agent_Cargo.lock;
   };
 }

@@ -15,6 +15,20 @@ let
   extraPkgs = pkgs.callPackage ./pkgs.nix { inherit base; };
 
   serialDevice = if pkgs.stdenv.hostPlatform.isx86 then "ttyS0" else "ttyAMA0";
+
+  mkService = name: {
+    serviceConfig = {
+      ExecStart = "${lib.getExe extraPkgs.android_virt.${name}} --grpc-port-file /mnt/internal/debian_service_port";
+      Type = "simple";
+      Restart = "on-failure";
+      RestartSec = 1;
+      User = "root";
+      Group = "root";
+      StandardOutput = "journal";
+      StandardError = "journal";
+    };
+    wantedBy = [ "multi-user.target" ];
+  };
 in
 
 with lib;
@@ -113,58 +127,13 @@ with lib;
 
   # from Virtualization/guest/storage_balloon_agent/debian/service
 
-  systemd.services.storage_balloon_agent = {
-    path = [ extraPkgs.android_virt.storage_balloon_agent ];
-    script = ''
-      storage_balloon_agent --grpc-port-file /mnt/internal/debian_service_port
-    '';
-    serviceConfig = {
-      Type = "simple";
-      Restart = "on-failure";
-      RestartSec = 1;
-      User = "root";
-      Group = "root";
-      StandardOutput = "journal";
-      StandardError = "journal";
-    };
-    wantedBy = [ "multi-user.target" ];
-  };
+  systemd.services.storage_balloon_agent = mkService "storage_balloon_agent";
 
   # from Virtualization/guest/forwarder_guest_launcher/debian/service
 
-  systemd.services.forwarder_guest_launcher = {
-    path = [ extraPkgs.android_virt.forwarder_guest_launcher ];
-    script = ''
-      forwarder_guest_launcher --grpc-port-file /mnt/internal/debian_service_port
-    '';
-    serviceConfig = {
-      Type = "simple";
-      Restart = "on-failure";
-      RestartSec = 1;
-      User = "root";
-      Group = "root";
-      StandardOutput = "journal";
-      StandardError = "journal";
-    };
-    wantedBy = [ "multi-user.target" ];
-  };
+  systemd.services.forwarder_guest_launcher = mkService "forwarder_guest_launcher";
 
   # from Virtualization/guest/shutdown_runner/debian/service
 
-  systemd.services.shutdown_runner = {
-    path = [ extraPkgs.android_virt.shutdown_runner ];
-    script = ''
-      shutdown_runner --grpc-port-file /mnt/internal/debian_service_port
-    '';
-    serviceConfig = {
-      Type = "simple";
-      Restart = "on-failure";
-      RestartSec = 1;
-      User = "root";
-      Group = "root";
-      StandardOutput = "journal";
-      StandardError = "journal";
-    };
-    wantedBy = [ "multi-user.target" ];
-  };
+  systemd.services.shutdown_runner = mkService "shutdown_runner";
 }
