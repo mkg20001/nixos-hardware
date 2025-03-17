@@ -68,7 +68,7 @@ in
     shutdown_runner = rustPlatform.buildRustPackage {
       name = "shutdown_runner";
 
-      inherit BINDGEN_EXTRA_CLANG_ARGS LD_LIBRARY_PATH LIBRARY_PATH;
+      inherit RUSTFLAGS;
 
       src = base;
       setSourceRoot = "sourceRoot=$(echo */guest/shutdown_runner)";
