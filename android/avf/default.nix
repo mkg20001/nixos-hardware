@@ -122,7 +122,10 @@ with lib;
 
     services.avahi = {
       enable = true;
-      publish.enable = true;
+      publish = {
+        enable = true;
+        userServices = true;
+      };
     };
 
     system.build.avfImage = pkgs.callPackage ./finish.nix {
