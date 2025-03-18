@@ -9,8 +9,8 @@
 let
   base = pkgs.fetchgit {
     url = "https://android.googlesource.com/platform/packages/modules/Virtualization/";
-    rev = "b1dbca3f1dba69e953eeb81eec0485c387670b55";
-    hash = "sha256-g3XNwmufAZQNh8DNDu1sQZM1gdxXL8oJfGnzQ+3DYoo=";
+    rev = "f3ae17a45df25d1c0913b5cca68fcea6e5a5ce05";
+    hash = "sha256-BcfGSMOKc3Ku3GhpFgdOVM6VT3tj0ujbDIxR2MfZAxE=";
   };
   extraPkgs = pkgs.callPackage ./pkgs.nix { inherit base; };
 
@@ -30,7 +30,7 @@ let
       StandardError = "journal";
     };
     wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" "network.target" ];
+    after = [ "network-online.target" "network.target" "mnt-internal.mount" ];
   };
 
   vmConfig = pkgs.formats.json {};
@@ -102,7 +102,7 @@ with lib;
       };
 
       wantedBy = [ "multi-user.target" ];
-      after = [ "network-online.target" "network.target" ];
+      after = [ "network-online.target" "network.target" "mnt-internal.mount" ];
     };
 
     systemd.services.avahi_ttyd = {
@@ -118,6 +118,11 @@ with lib;
         User = "root";
         Group = "root";
       };
+    };
+
+    services.avahi = {
+      enable = true;
+      publish.enable = true;
     };
 
     system.build.avfImage = pkgs.callPackage ./finish.nix {
