@@ -141,6 +141,7 @@ with lib;
 
     boot.growPartition = true;
     boot.loader.systemd-boot.enable = true;
+    boot.initrd.systemd.enable = true;
 
     # image building needs to know what device to install bootloader on
     boot.loader.grub.device = "/dev/vda";
