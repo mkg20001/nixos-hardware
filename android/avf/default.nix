@@ -30,6 +30,7 @@ let
       StandardError = "journal";
     };
     wantedBy = [ "multi-user.target" ];
+    after = [ "network-online.target" "network.target" ];
   };
 
   vmConfig = pkgs.formats.json {};
@@ -101,6 +102,7 @@ with lib;
       };
 
       wantedBy = [ "multi-user.target" ];
+      after = [ "network-online.target" "network.target" ];
     };
 
     systemd.services.avahi_ttyd = {
@@ -158,10 +160,6 @@ with lib;
       "console=${serialDevice}"
     ];
 
-    systemd.services.ttyd = {
-      #    after = [ "virtiofs_internal.service" ];
-    };
-
     fileSystems = {
       "/" = {
         device = "/dev/disk/by-label/nixos";
@@ -199,9 +197,17 @@ with lib;
       text = ''
         if [ ! -e /_setup ]; then
           cp -rv ${./etc}/* /etc/
+          mkdir -vp /mnt/{shared,internal}
+          chown -v 1000:100 /mnt/{shared,internal}
           touch /_setup
         fi
       '';
     };
+
+    systemd.network.enable = true;
+    networking.useNetworkd = true;
+    networking.dhcpcd.enable = false;
+    services.resolved.dnssec = "false";
+    networking.useDHCP = true;
   };
 }
