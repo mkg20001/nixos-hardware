@@ -108,7 +108,7 @@ with lib;
     systemd.services.avahi_ttyd = {
       description = "avahi_TTYD";
 
-      after = [ "ttyd.service" ];
+      after = [ "ttyd.service" "avahi-daemon.socket" ];
       wantedBy = [ "multi-user.target" ];
 
       serviceConfig = {
