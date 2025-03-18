@@ -31,109 +31,178 @@ let
     };
     wantedBy = [ "multi-user.target" ];
   };
+
+  vmConfig = pkgs.formats.json {};
+
+  cfg = config.avf;
 in
 
 with lib;
 {
-  /*
-    services.ttyd = {
-      enable = true;
-      enableSSL = true;
-      certFile = "/etc/ttyd/server.crt";
-      keyFile = "/etc/ttyd/server.key";
-      caFile = "/mnt/internal/ca.crt";
-      writeable = true;
-      #   disableLeaveAlert = true;
-      #   -W login
-      #   -f droid
-      # package = extraPkgs.ttyd;
-    };
-  */
-
-  systemd.services.ttyd = {
-    serviceConfig = {
-      ExecStart = "${extraPkgs.ttyd}/bin/ttyd --ssl --ssl-cert /etc/ttyd/server.crt --ssl-key /etc/ttyd/server.key --ssl-ca /mnt/internal/ca.crt -t disableLeaveAlert=true -W login -f droid";
-      Type = "simple";
-      Restart = "always";
-      User = "root";
-      Group = "root";
-    };
-
-    wantedBy = [ "multi-user.target" ];
-  };
-
-  system.build.avfImage = pkgs.callPackage ./finish.nix {
-    raw_disk_image = import "${pkgs.path}/nixos/lib/make-disk-image.nix" {
-      inherit pkgs lib config;
-
-      partitionTableType = "efi";
-      copyChannel = true;
+  options = {
+    avf.vmConfig = mkOption {
+      description = "VM config for AVF";
+      default = {};
+      type = vmConfig.type;
     };
   };
 
-  boot.growPartition = true;
-  boot.loader.systemd-boot.enable = true;
-
-  # image building needs to know what device to install bootloader on
-  boot.loader.grub.device = "/dev/vda";
-  # Faster boot. User can't access bootloader currently anyways (?)
-  boot.loader.timeout = 0;
-
-  # avf patches only available for 6.1 right now
-  boot.kernelPackages = pkgs.linuxPackages_6_1;
-
-  boot.kernelPatches = [
-    {
-      name = "avf";
-      patch = "${base}/build/debian/kernel/patches/avf/arm64-balloon.patch";
-      extraStructuredConfig = with lib.kernel; {
-        # DRM = module;
-        SND_VIRTIO = module;
-        SND = yes;
-        SOUND = yes;
+  config = {
+    avf.vmConfig = {
+      name = "nixos";
+      debugLevel = 1;
+      disks = [
+        {
+          partitions = [
+            {
+              label = "nixos";
+              path = "$PAYLOAD_DIR/root_part";
+              writable = true;
+              guid = "{root_part_guid}";
+            }
+            {
+              label = "ESP";
+              path = "$PAYLOAD_DIR/efi_part";
+              writable = false;
+              guid = "{efi_part_guid}";
+            }
+          ];
+          writable = true;
+        }
+      ];
+      sharedPath = [
+        {
+          sharedPath = "/storage/emulated";
+        }
+        {
+          sharedPath = "$APP_DATA_DIR/files";
+        }
+      ];
+      protected = false;
+      cpu_topology = "match_host";
+      platform_version = "~1.0";
+      memory_mib = 4096;
+      debuggable = true;
+      console_out = true;
+      console_input_device = "ttyS0";
+      network = true;
+      auto_memory_balloon = true;
+      gpu = {
+        backend = "2d";
       };
-    }
-  ];
+    };
 
-  boot.kernelParams = [
-    "console=tty1"
-    "console=${serialDevice}"
-  ];
+    systemd.services.ttyd = {
+      serviceConfig = {
+        ExecStart = "${extraPkgs.ttyd}/bin/ttyd --ssl --ssl-cert /etc/ttyd/server.crt --ssl-key /etc/ttyd/server.key --ssl-ca /mnt/internal/ca.crt -t disableLeaveAlert=true -W login -f droid";
+        Type = "simple";
+        Restart = "always";
+        User = "root";
+        Group = "root";
+      };
 
-  systemd.services.ttyd = {
-    #    after = [ "virtiofs_internal.service" ];
+      wantedBy = [ "multi-user.target" ];
+    };
+
+    systemd.services.avahi_ttyd = {
+      description = "avahi_TTYD";
+
+      after = [ "ttyd.service" ];
+      wantedBy = [ "multi-user.target" ];
+
+      serviceConfig = {
+        ExecStart = "${pkgs.avahi}/bin/avahi-publish-service ttyd _http._tcp 7681";
+        Type = "simple";
+        Restart = "always";
+        User = "root";
+        Group = "root";
+      };
+    };
+
+    system.build.avfImage = pkgs.callPackage ./finish.nix {
+      raw_disk_image = import "${pkgs.path}/nixos/lib/make-disk-image.nix" {
+        inherit pkgs lib config;
+
+        partitionTableType = "efi";
+        copyChannel = true;
+      };
+
+      vm_config = vmConfig.generate "vm_config.json" cfg.vmConfig;
+    };
+
+    boot.growPartition = true;
+    boot.loader.systemd-boot.enable = true;
+
+    # image building needs to know what device to install bootloader on
+    boot.loader.grub.device = "/dev/vda";
+    # Faster boot. User can't access bootloader currently anyways (?)
+    boot.loader.timeout = 0;
+
+    # avf patches only available for 6.1 right now
+    boot.kernelPackages = pkgs.linuxPackages_6_1;
+
+    boot.kernelPatches = [
+      {
+        name = "avf";
+        patch = "${base}/build/debian/kernel/patches/avf/arm64-balloon.patch";
+        extraStructuredConfig = with lib.kernel; {
+          # DRM = module;
+          SND_VIRTIO = module;
+          SND = yes;
+          SOUND = yes;
+        };
+      }
+    ];
+
+    boot.kernelParams = [
+      "console=tty1"
+      "console=${serialDevice}"
+    ];
+
+    systemd.services.ttyd = {
+      #    after = [ "virtiofs_internal.service" ];
+    };
+
+    fileSystems = {
+      "/" = {
+        device = "/dev/disk/by-label/nixos";
+        autoResize = true;
+        fsType = "ext4";
+      };
+      "/boot" = {
+        device = "/dev/disk/by-label/ESP";
+        fsType = "vfat";
+      };
+
+      "/mnt/internal" = {
+        device = "internal";
+        fsType = "virtiofs";
+      };
+      "/mnt/shared" = {
+        device = "android";
+        fsType = "virtiofs";
+      };
+    };
+
+    # from Virtualization/guest/storage_balloon_agent/debian/service
+
+    systemd.services.storage_balloon_agent = mkService "storage_balloon_agent";
+
+    # from Virtualization/guest/forwarder_guest_launcher/debian/service
+
+    systemd.services.forwarder_guest_launcher = mkService "forwarder_guest_launcher";
+
+    # from Virtualization/guest/shutdown_runner/debian/service
+
+    systemd.services.shutdown_runner = mkService "shutdown_runner";
+
+    system.activationScripts.setup_files = {
+      text = ''
+        if [ ! -e /_setup ]; then
+          cp -rv ${./etc}/* /etc/
+          touch /_setup
+        fi
+      '';
+    };
   };
-
-  fileSystems = {
-    "/" = {
-      device = "/dev/disk/by-label/nixos";
-      autoResize = true;
-      fsType = "ext4";
-    };
-    "/boot" = {
-      device = "/dev/disk/by-label/ESP";
-      fsType = "vfat";
-    };
-
-    "/mnt/internal" = {
-      device = "internal";
-      fsType = "virtiofs";
-    };
-    "/mnt/shared" = {
-      device = "android";
-      fsType = "virtiofs";
-    };
-  };
-
-  # from Virtualization/guest/storage_balloon_agent/debian/service
-
-  systemd.services.storage_balloon_agent = mkService "storage_balloon_agent";
-
-  # from Virtualization/guest/forwarder_guest_launcher/debian/service
-
-  systemd.services.forwarder_guest_launcher = mkService "forwarder_guest_launcher";
-
-  # from Virtualization/guest/shutdown_runner/debian/service
-
-  systemd.services.shutdown_runner = mkService "shutdown_runner";
 }

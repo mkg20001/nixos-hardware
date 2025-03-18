@@ -1,6 +1,7 @@
 {
   stdenv,
   raw_disk_image,
+  vm_config,
   utillinux,
   pigz,
 }:
@@ -22,13 +23,13 @@ stdenv.mkDerivation {
 
     OFFSETS=($(sfdisk -l $diskImage -o Start,Sectors | tail -n 2 | grep -o "[0-9]*"))
 
-    echo ''${build_id} > build_id
+    echo $out > build_id
 
     # bs=512 -> sector size is 512, skip=start sector, count=size in sectors
     dd if=$diskImage of=efi_part bs=512 skip="''${OFFSETS[0]}" count="''${OFFSETS[1]}"
     dd if=$diskImage of=root_part bs=512 skip="''${OFFSETS[2]}" count="''${OFFSETS[3]}"
 
-    cp ${./vm_config.json} vm_config.json
+    cp ${vm_config} vm_config.json
 
     sed -i "s/{efi_part_guid}/$(sfdisk --part-uuid $diskImage 1)/g" vm_config.json
     sed -i "s/{root_part_guid}/$(sfdisk --part-uuid $diskImage 2)/g" vm_config.json
