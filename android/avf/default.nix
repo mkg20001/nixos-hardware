@@ -14,11 +14,13 @@ let
   };
   extraPkgs = pkgs.callPackage ./pkgs.nix { inherit base; };
 
-  serialDevice = if pkgs.stdenv.hostPlatform.isx86 then "ttyS0" else "ttyAMA0";
+  serialDevice = "ttyS0";
 
   mkService = name: {
     serviceConfig = {
-      ExecStart = "${lib.getExe extraPkgs.android_virt.${name}} --grpc-port-file /mnt/internal/debian_service_port";
+      ExecStart = "${
+        lib.getExe extraPkgs.android_virt.${name}
+      } --grpc-port-file /mnt/internal/debian_service_port";
       Type = "simple";
       Restart = "on-failure";
       RestartSec = 1;
@@ -60,16 +62,14 @@ with lib;
     wantedBy = [ "multi-user.target" ];
   };
 
-  system.build.avfImage = pkgs.vmTools.runInLinuxVM (
-    pkgs.callPackage ./finish.nix {
-      raw_disk_image = import "${pkgs.path}/nixos/lib/make-disk-image.nix" {
-        inherit pkgs lib config;
+  system.build.avfImage = pkgs.callPackage ./finish.nix {
+    raw_disk_image = import "${pkgs.path}/nixos/lib/make-disk-image.nix" {
+      inherit pkgs lib config;
 
-        partitionTableType = "efi";
-        copyChannel = true;
-      };
-    }
-  );
+      partitionTableType = "efi";
+      copyChannel = true;
+    };
+  };
 
   boot.growPartition = true;
   boot.loader.systemd-boot.enable = true;

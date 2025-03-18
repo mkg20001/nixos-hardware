@@ -2,37 +2,36 @@
   stdenv,
   raw_disk_image,
   utillinux,
+  pigz,
 }:
 
 stdenv.mkDerivation {
   name = "avf_image.tar.gz";
 
-  nativeBuildInputs = [ utillinux ];
-  preVM = ''
-    cp ${raw_disk_image}/*.img img
-    chmod +w img
-    diskImage=img
-  '';
-  memSize = 4096 * 2;
+  nativeBuildInputs = [
+    utillinux
+    pigz
+  ];
 
   dontUnpack = true;
   dontBuild = true;
   installPhase = ''
-    local root_partition_num=2
-    local efi_partition_num=1
+    cp ${raw_disk_image}/*.img img
+    chmod +w img
+    diskImage=img
+
+    OFFSETS=($(sfdisk -l $diskImage -o Start,Sectors | tail -n 2 | grep -o "[0-9]*"))
 
     echo ''${build_id} > build_id
 
-    lsblk
-    df -h .
-
-    dd if="/dev/vda$root_partition_num" of=root_part
-    dd if="/dev/vda$efi_partition_num" of=efi_part
+    # bs=512 -> sector size is 512, skip=start sector, count=size in sectors
+    dd if=$diskImage of=efi_part bs=512 skip="''${OFFSETS[0]}" count="''${OFFSETS[1]}"
+    dd if=$diskImage of=root_part bs=512 skip="''${OFFSETS[2]}" count="''${OFFSETS[3]}"
 
     cp ${./vm_config.json} vm_config.json
 
-    sed -i "s/{root_part_guid}/$(sfdisk --part-uuid /dev/vda $root_partition_num)/g" vm_config.json
-    sed -i "s/{efi_part_guid}/$(sfdisk --part-uuid /dev/vda $efi_partition_num)/g" vm_config.json
+    sed -i "s/{efi_part_guid}/$(sfdisk --part-uuid $diskImage 1)/g" vm_config.json
+    sed -i "s/{root_part_guid}/$(sfdisk --part-uuid $diskImage 2)/g" vm_config.json
 
     contents=(
     build_id
@@ -42,6 +41,6 @@ stdenv.mkDerivation {
     )
 
     # --sparse option isn't supported in apache-commons-compress
-    tar czv -f $out -C . "''${contents[@]}"
+    tar cv -I pigz -f $out -C . "''${contents[@]}"
   '';
 }

@@ -8,36 +8,38 @@
 }:
 let
 
-  mkRustPkg = name: lock: rustPlatform.buildRustPackage {
-    inherit name;
+  mkRustPkg =
+    name: lock:
+    rustPlatform.buildRustPackage {
+      inherit name;
 
-    RUSTFLAGS = "-C linker=gcc";
+      RUSTFLAGS = "-C linker=gcc";
 
-    # see https://github.com/NixOS/nixpkgs/issues/145726
-    # TODO: disable when cross-compling
-    prePatch = ''
-      rm .cargo/config.toml
-    '';
+      # see https://github.com/NixOS/nixpkgs/issues/145726
+      # TODO: disable when cross-compling
+      prePatch = ''
+        rm .cargo/config.toml
+      '';
 
-    src = base;
-    setSourceRoot = "sourceRoot=$(echo */guest/${name})";
+      src = base;
+      setSourceRoot = "sourceRoot=$(echo */guest/${name})";
 
-    nativeBuildInputs = [
-      protobuf_28
-    ];
+      nativeBuildInputs = [
+        protobuf_28
+      ];
 
-    postPatch = ''
-      ln -s ${lock} Cargo.lock
-    '';
+      postPatch = ''
+        ln -s ${lock} Cargo.lock
+      '';
 
-    cargoLock = {
-      lockFile = lock;
+      cargoLock = {
+        lockFile = lock;
+      };
+
+      meta = {
+        mainProgram = name;
+      };
     };
-
-    meta = {
-      mainProgram = name;
-    };
-  };
 in
 {
   ttyd =
