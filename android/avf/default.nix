@@ -50,7 +50,6 @@ with lib;
   config = {
     avf.vmConfig = {
       name = "nixos";
-      debugLevel = 1;
       disks = [
         {
           partitions = [
