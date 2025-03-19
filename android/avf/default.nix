@@ -100,6 +100,19 @@ with lib;
       };
     };
 
+    /*
+      services.ttyd = {
+        enable = true;
+        enableSSL = true;
+        caFile = = "/mnt/internal/ca.crt";
+        keyFile = "/etc/ttyd/server.key";
+        clientOptions = [ "disableLeaveAlert=true" ];
+        certFile = "/etc/ttyd/server.ct";
+        entrypoint = [ "${pkgs.shadow}/bin/login" "-f" "droid" ];
+        writeable = true;
+      };
+    */
+
     systemd.services.ttyd = {
       serviceConfig = {
         ExecStart = "${extraPkgs.ttyd}/bin/ttyd --ssl --ssl-cert /etc/ttyd/server.crt --ssl-key /etc/ttyd/server.key --ssl-ca /mnt/internal/ca.crt -t disableLeaveAlert=true -W ${config.services.ttyd.entrypoint} -f droid";
