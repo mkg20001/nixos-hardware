@@ -196,7 +196,9 @@ with lib;
 
     # from Virtualization/guest/forwarder_guest_launcher/debian/service
 
-    systemd.services.forwarder_guest_launcher = mkService "forwarder_guest_launcher";
+    systemd.services.forwarder_guest_launcher = mkService "forwarder_guest_launcher" // {
+      path = [ extraPkgs.android_virt.forwarder_guest ];
+    };
 
     # from Virtualization/guest/shutdown_runner/debian/service
 
@@ -212,6 +214,19 @@ with lib;
         fi
       '';
     };
+
+    users.users.droid = {
+      isNormalUser = true;
+      extraGroups = [ "droid" "wheel" "video" "render" ];
+      initialHashedPassword = "";
+    };
+    users.groups.droid = {};
+    security.sudo.wheelNeedsPassword = false;
+
+    programs.bash.promptInit = ''
+      # Show title of current running command
+      trap 'echo -ne "\e]0;\$BASH_COMMAND\007"' DEBUG
+    '';
 
     systemd.network.enable = true;
     networking.useNetworkd = true;

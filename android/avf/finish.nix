@@ -17,9 +17,7 @@ stdenv.mkDerivation {
   dontUnpack = true;
   dontBuild = true;
   installPhase = ''
-    cp ${raw_disk_image}/*.img img
-    chmod +w img
-    diskImage=img
+    diskImage=$(echo ${raw_disk_image}/*.img)
 
     OFFSETS=($(sfdisk -l $diskImage -o Start,Sectors | tail -n 2 | grep -o "[0-9]*"))
 
