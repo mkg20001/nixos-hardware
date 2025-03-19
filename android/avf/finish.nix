@@ -4,6 +4,7 @@
   vm_config,
   utillinux,
   pigz,
+  e2fsprogs,
 }:
 
 stdenv.mkDerivation {
@@ -12,6 +13,7 @@ stdenv.mkDerivation {
   nativeBuildInputs = [
     utillinux
     pigz
+    e2fsprogs
   ];
 
   dontUnpack = true;
@@ -26,6 +28,9 @@ stdenv.mkDerivation {
     # bs=512 -> sector size is 512, skip=start sector, count=size in sectors
     dd if=$diskImage of=efi_part bs=512 skip="''${OFFSETS[0]}" count="''${OFFSETS[1]}"
     dd if=$diskImage of=root_part bs=512 skip="''${OFFSETS[2]}" count="''${OFFSETS[3]}"
+
+    # can be removed once android e2fsck supports this feature
+    tune2fs -O ^orphan_file root_part
 
     cp ${vm_config} vm_config.json
 

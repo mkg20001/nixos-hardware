@@ -30,10 +30,14 @@ let
       StandardError = "journal";
     };
     wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" "network.target" "mnt-internal.mount" ];
+    after = [
+      "network-online.target"
+      "network.target"
+      "mnt-internal.mount"
+    ];
   };
 
-  vmConfig = pkgs.formats.json {};
+  vmConfig = pkgs.formats.json { };
 
   cfg = config.avf;
 in
@@ -47,7 +51,7 @@ with lib;
   options = {
     avf.vmConfig = mkOption {
       description = "VM config for AVF";
-      default = {};
+      default = { };
       type = vmConfig.type;
     };
   };
@@ -106,13 +110,20 @@ with lib;
       };
 
       wantedBy = [ "multi-user.target" ];
-      after = [ "network-online.target" "network.target" "mnt-internal.mount" ];
+      after = [
+        "network-online.target"
+        "network.target"
+        "mnt-internal.mount"
+      ];
     };
 
     systemd.services.avahi_ttyd = {
       description = "avahi_TTYD";
 
-      after = [ "ttyd.service" "avahi-daemon.socket" ];
+      after = [
+        "ttyd.service"
+        "avahi-daemon.socket"
+      ];
       wantedBy = [ "multi-user.target" ];
 
       serviceConfig = {
@@ -195,10 +206,12 @@ with lib;
         device = "android";
         fsType = "virtiofs";
       };
-      /* "/mnt/backup" = {
-        device = "/dev/vdb";
-        fsType = "virtiofs";
-      }; */
+      /*
+        "/mnt/backup" = {
+          device = "/dev/vdb";
+          fsType = "virtiofs";
+        };
+      */
     };
 
     # from Virtualization/guest/storage_balloon_agent/debian/service
@@ -208,7 +221,11 @@ with lib;
     # from Virtualization/guest/forwarder_guest_launcher/debian/service
 
     systemd.services.forwarder_guest_launcher = mkService "forwarder_guest_launcher" // {
-      path = [ extraPkgs.android_virt.forwarder_guest pkgs.bcc "/run/current-system/sw" ];
+      path = [
+        extraPkgs.android_virt.forwarder_guest
+        pkgs.bcc
+        "/run/current-system/sw"
+      ];
     };
 
     # from Virtualization/guest/shutdown_runner/debian/service
@@ -228,10 +245,15 @@ with lib;
 
     users.users.droid = {
       isNormalUser = true;
-      extraGroups = [ "droid" "wheel" "video" "render" ];
+      extraGroups = [
+        "droid"
+        "wheel"
+        "video"
+        "render"
+      ];
       initialHashedPassword = "";
     };
-    users.groups.droid = {};
+    users.groups.droid = { };
     security.sudo.wheelNeedsPassword = false;
 
     programs.bcc.enable = true;
