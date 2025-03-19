@@ -138,6 +138,7 @@ with lib;
 
         partitionTableType = "efi";
         copyChannel = true;
+        memSize = "2048";
       };
 
       vm_config = vmConfig.generate "vm_config.json" cfg.vmConfig;
@@ -173,6 +174,8 @@ with lib;
       "console=${serialDevice}"
     ];
 
+    boot.kernelModules = [ "vhost_vsock" ];
+
     fileSystems = {
       "/" = {
         device = "/dev/disk/by-label/nixos";
@@ -205,7 +208,7 @@ with lib;
     # from Virtualization/guest/forwarder_guest_launcher/debian/service
 
     systemd.services.forwarder_guest_launcher = mkService "forwarder_guest_launcher" // {
-      path = [ extraPkgs.android_virt.forwarder_guest pkgs.bcc ];
+      path = [ extraPkgs.android_virt.forwarder_guest pkgs.bcc "/run/current-system/sw" ];
     };
 
     # from Virtualization/guest/shutdown_runner/debian/service

@@ -1,7 +1,7 @@
-diff --git a/guest/forwarder_guest_launcher/src/main.rs b/guest/forwarder_guest_launcher/src/main.rs
+diff --git a/src/main.rs b/src/main.rs
 index 3cb557aed..b42e54eb9 100644
---- a/guest/forwarder_guest_launcher/src/main.rs
-+++ b/guest/forwarder_guest_launcher/src/main.rs
+--- a/src/main.rs
++++ b/src/main.rs
 @@ -112,9 +112,7 @@ async fn report_active_ports(
      mut client: DebianServiceClient<Channel>,
  ) -> Result<(), Box<dyn std::error::Error>> {
