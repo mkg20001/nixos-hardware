@@ -9,8 +9,8 @@
 let
 
   mkRustPkg =
-    name: lock:
-    rustPlatform.buildRustPackage {
+    name: lock: extra:
+    rustPlatform.buildRustPackage ({
       inherit name;
 
       RUSTFLAGS = "-C linker=gcc";
@@ -39,7 +39,7 @@ let
       meta = {
         mainProgram = name;
       };
-    };
+    } // extra);
 in
 {
   ttyd =
@@ -57,9 +57,13 @@ in
       });
 
   android_virt = lib.recurseIntoAttrs {
-    forwarder_guest = mkRustPkg "forwarder_guest" ./forwarder_guest_Cargo.lock;
-    forwarder_guest_launcher = mkRustPkg "forwarder_guest_launcher" ./forwarder_guest_launcher_Cargo.lock;
-    shutdown_runner = mkRustPkg "shutdown_runner" ./shutdown_runner_Cargo.lock;
-    storage_balloon_agent = mkRustPkg "storage_balloon_agent" ./storage_balloon_agent_Cargo.lock;
+    forwarder_guest = mkRustPkg "forwarder_guest" ./forwarder_guest_Cargo.lock {};
+    forwarder_guest_launcher = mkRustPkg "forwarder_guest_launcher" ./forwarder_guest_launcher_Cargo.lock {
+      patches = [
+        ./guest-tcpstates.patch
+      ];
+    };
+    shutdown_runner = mkRustPkg "shutdown_runner" ./shutdown_runner_Cargo.lock {};
+    storage_balloon_agent = mkRustPkg "storage_balloon_agent" ./storage_balloon_agent_Cargo.lock {};
   };
 }

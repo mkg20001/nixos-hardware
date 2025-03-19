@@ -40,6 +40,10 @@ in
 
 with lib;
 {
+  imports = [
+    "${modulesPath}/profiles/qemu-guest.nix"
+  ];
+
   options = {
     avf.vmConfig = mkOption {
       description = "VM config for AVF";
@@ -188,6 +192,10 @@ with lib;
         device = "android";
         fsType = "virtiofs";
       };
+      /* "/mnt/backup" = {
+        device = "/dev/vdb";
+        fsType = "virtiofs";
+      }; */
     };
 
     # from Virtualization/guest/storage_balloon_agent/debian/service
@@ -197,7 +205,7 @@ with lib;
     # from Virtualization/guest/forwarder_guest_launcher/debian/service
 
     systemd.services.forwarder_guest_launcher = mkService "forwarder_guest_launcher" // {
-      path = [ extraPkgs.android_virt.forwarder_guest ];
+      path = [ extraPkgs.android_virt.forwarder_guest pkgs.bcc ];
     };
 
     # from Virtualization/guest/shutdown_runner/debian/service
@@ -208,8 +216,8 @@ with lib;
       text = ''
         if [ ! -e /_setup ]; then
           cp -rv ${./etc}/* /etc/
-          mkdir -vp /mnt/{shared,internal}
-          chown -v 1000:100 /mnt/{shared,internal}
+          mkdir -vp /mnt/{shared,internal,backup}
+          chown -v 1000:100 /mnt/{shared,internal,backup}
           touch /_setup
         fi
       '';
@@ -222,6 +230,8 @@ with lib;
     };
     users.groups.droid = {};
     security.sudo.wheelNeedsPassword = false;
+
+    programs.bcc.enable = true;
 
     programs.bash.promptInit = ''
       # Show title of current running command
