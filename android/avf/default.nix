@@ -102,7 +102,7 @@ with lib;
 
     systemd.services.ttyd = {
       serviceConfig = {
-        ExecStart = "${extraPkgs.ttyd}/bin/ttyd --ssl --ssl-cert /etc/ttyd/server.crt --ssl-key /etc/ttyd/server.key --ssl-ca /mnt/internal/ca.crt -t disableLeaveAlert=true -W login -f droid";
+        ExecStart = "${extraPkgs.ttyd}/bin/ttyd --ssl --ssl-cert /etc/ttyd/server.crt --ssl-key /etc/ttyd/server.key --ssl-ca /mnt/internal/ca.crt -t disableLeaveAlert=true -W ${config.services.ttyd.entrypoint} -f droid";
         Type = "simple";
         Restart = "always";
         User = "root";
@@ -268,5 +268,8 @@ with lib;
     networking.dhcpcd.enable = false;
     services.resolved.dnssec = "false";
     networking.useDHCP = true;
+    networking.firewall.enable = true; # default
+    networking.nftables.enable = true;
+    networking.firewall.allowedTCPPorts = [ 7681 ];
   };
 }
